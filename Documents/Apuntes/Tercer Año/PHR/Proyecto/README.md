@@ -1,4 +1,4 @@
-# CPU_PhR
+# Proyecto_CPU
 
 
 
