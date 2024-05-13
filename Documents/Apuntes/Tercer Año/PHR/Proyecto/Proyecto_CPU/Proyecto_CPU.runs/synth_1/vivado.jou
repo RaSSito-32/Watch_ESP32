@@ -1,0 +1,14 @@
+#-----------------------------------------------------------
+# Vivado v2023.2 (64-bit)
+# SW Build 4029153 on Fri Oct 13 20:14:34 MDT 2023
+# IP Build 4028589 on Sat Oct 14 00:45:43 MDT 2023
+# SharedData Build 4025554 on Tue Oct 10 17:18:54 MDT 2023
+# Start of session at: Sun May 12 21:19:40 2024
+# Process ID: 26312
+# Current directory: C:/Users/Mirare69/Desktop/cpu_phr/cpu_phr.runs/synth_1
+# Command line: vivado.exe -log MemoryController.vds -product Vivado -mode batch -messageDb vivado.pb -notrace -source MemoryController.tcl
+# Log file: C:/Users/Mirare69/Desktop/cpu_phr/cpu_phr.runs/synth_1/MemoryController.vds
+# Journal file: C:/Users/Mirare69/Desktop/cpu_phr/cpu_phr.runs/synth_1\vivado.jou
+# Running On: DESKTOP-FT6A7VT, OS: Windows, CPU Frequency: 3693 MHz, CPU Physical cores: 12, Host memory: 34266 MB
+#-----------------------------------------------------------
+source MemoryController.tcl -notrace
