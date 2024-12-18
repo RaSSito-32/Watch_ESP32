@@ -1,4 +1,3 @@
- 
 with Ada.Text_IO; use Ada.Text_IO;
 with Ada.Integer_Text_IO; use Ada.Integer_Text_IO;
 with Ada.Float_Text_IO; use Ada.Float_Text_IO;
@@ -68,6 +67,7 @@ procedure control2 is
     ---------------------------------------------------------------------
 
     Global_Degree_Servo: integer := 90;
+    Global_Pitch: Pitch_Type := 0;
 
   -----------------------------------------------------------------------
   ------------- declaration of objects 
@@ -96,38 +96,38 @@ procedure control2 is
   ------------- declaration of protected objects 
   -----------------------------------------------------------------------
   
-  protected Roll_Pitch_Velocity_Data is
-    pragma priority(Roll_Priority);
-    procedure Put_Roll (data_roll: in Joystick_Values);
-    procedure Put_Pitch (data_pitch: in Joystick_Values);
-    function Take_Data return Joystick_Type;
+    protected Roll_Pitch_Velocity_Data is
+      pragma priority(Roll_Priority);
+      procedure Put_Roll (data_roll: in Joystick_Values);
+      procedure Put_Pitch (data_pitch: in Joystick_Values);
+      function Take_Data return Joystick_Type;
     
     private
       Joystick_Private: Joystick_Type := (0,0);
-  end Roll_Pitch_Velocity_Data;
+    end Roll_Pitch_Velocity_Data;
     
-  protected Control_Button is
+    protected Control_Button is
       pragma priority(25);
       procedure Interrupt_Button;
       --pragma Attach_Handler(Interrupt_Button, Ada.Interrupts.Names.External_Interrupt_2);
       entry Wait_Event;
       function Get_Mode return boolean;
       procedure Set_Mode;
-      private
+    private
         Sem: boolean := False;
         Mode: boolean := true;
-  end Control_Button;
+    end Control_Button;
   
   -----------------------------------------------------------------------
   ------------- body of protected
   -----------------------------------------------------------------------
   
-  protected body Roll_Pitch_Velocity_Data is
+    protected body Roll_Pitch_Velocity_Data is
       procedure Put_Roll (data_roll: in Joystick_Values) is
       begin
         --Execution_Time(Milliseconds(5));
         Joystick_Private(x) := data_roll;
-      end Put_Roll;
+      end Put_Roll;  
       
       procedure Put_Pitch (data_pitch: in Joystick_Values) is
       begin
@@ -143,7 +143,7 @@ procedure control2 is
       
     end Roll_Pitch_Velocity_Data;
     
-   protected body Control_Button is
+    protected body Control_Button is
       procedure Interrupt_Button is
       begin
         Sem := true;
@@ -286,10 +286,9 @@ procedure control2 is
     Ok: integer := 0;
     
     begin
-	  Current_Joystick(x) := Joystick_Values (Read_Gyroscope_X_A);
+	   Current_Joystick(x) := Joystick_Values (Read_Gyroscope_X_A);
 
       if (Control_Button.Get_Mode) then
-    
         if (Current_Joystick(x) > 45) then
           Grade_Rotation := 45;
         elsif (Current_Joystick(x) < -45) then
@@ -341,19 +340,14 @@ procedure control2 is
       if (Control_Button.Get_Mode) then
         if (not Get_Maneuver) then
           if ((Altitude <= 2000 and Grade_Pitch < 0) or (Altitude >= 10000 and Grade_Pitch > 0)) then
-            current_Joystick(y) := 0;
-            --set_Aircraft_Pitch(0);
-            --Cambiar el valor de pitch
+            Global_Pitch := 0;
           else
-            current_Joystick(y) := 0;
-            --set_Aircraft_Pitch(Grade_Pitch);
-            --Cambiar valor Pitch
+            Global_Pitch := Grade_Pitch;
           end if;
-        --Actualizar dato roll privado
         Roll_Pitch_Velocity_Data.Put_Pitch(Current_Joystick(y));
         end if;
       else
-        --set_Aircraft_Pitch(Pitch_Type (Current_Joystick(y) * (-1)));
+        Global_Pitch := Pitch_Type (Current_Joystick(y) * (-1));
         Roll_Pitch_Velocity_Data.Put_Pitch(Current_Joystick(y));
       end if;
       
@@ -379,13 +373,10 @@ procedure control2 is
         elsif (Current_Joystick(y) = 0 and Current_Joystick(x) /= 0 and Current_Pw < 1000) then		--Maneuver Roll
           Velocity := Velocity + 120;
         elsif (Current_Joystick(y) /= 0 and Current_Joystick(x) /= 0 and Current_Pw < 1000) then  	--Maneuver Pitch and Roll
-        Velocity := Velocity + 300;
+          Velocity := Velocity + 300;
       end if;
       
-        if (Velocity >= 1000) then
-          Ok := Set_led_2_A(1);
-          Speed_Global := 1000;
-        elsif (Velocity <= 300) then
+        if (Velocity >= 1000 or Velocity <= 300) then
           Ok := Set_led_2_A(1);
           Speed_Global := 1000;
         else
@@ -405,19 +396,19 @@ procedure control2 is
     
     procedure Control_Collisions is 
     Current_Obstacle_Distance: Distance_Type := 0;   
-    Current_Pw : Power_Type := 0;
-    Current_S :Speed_Type :=0;
-    Velocity_Seconds : integer := 0;
-    Time_To_Collision : integer := 0;
+    Current_Pw: Power_Type := 0;
+    Current_S: Speed_Type := 0;
+    Velocity_Seconds: integer := 0;
+    Time_To_Collision: integer := 0;
     Pilot_P: PilotPresence_Type;
-    Current_A: Altitude_Type :=0;
+    Current_A: Altitude_Type := 0;
     Current_Light: Light_Type := 0;
-    Ok : integer := 0;
+    Ok: integer := 0;
     
     begin
       if (Control_Button.Get_Mode) then
-		Current_Obstacle_Distance := Distance_Type (read_infrared_A);
-		Current_Pw := Power_Type (read_single_ADC_sensor_A(2));
+		  Current_Obstacle_Distance := Distance_Type (getDistance_A);  --Medir distancia mínima que detecta
+		  Current_Pw := Power_Type (read_single_ADC_sensor_A(2));
  
         Current_S := Speed_Type (float (Current_Pw) * 1.2);
       
@@ -430,24 +421,25 @@ procedure control2 is
         if (Control_Button.Get_Mode) then
           if (Pilot_P = 1) then
             if (Time_To_Collision < 10) then
-              Ok := 0; --Set_Led_1_A(1);
+              Ok := Set_Led_1_A(1);
             else
-			  Ok := 0; --Set_Led_1_A(1);
+			     Ok := Set_Led_1_A(0);
             end if;
+            
             if (Time_To_Collision < 5) then
-              Ok := 0; --Set_Led_1_A(1);
+              Ok := Set_Led_1_A(1);
             else
-			  Ok := 0; --Set_Led_1_A(1);
+			     Ok := Set_Led_1_A(0);
             end if;
         
           elsif (Current_Light < 500 or Pilot_P = 0) then
             if (Time_To_Collision < 15) then
-              Ok := 0; --Set_Led_1_A(1);
+              Ok := Set_Led_1_A(1);
             else
-              Ok := 0; --Set_Led_1_A(1);
+              Ok := Set_Led_1_A(0);
             end if;
-      	    if (Time_To_Collision < 10) then
-      	      Set_Maneuver(true);
+      	     if (Time_To_Collision < 10) then
+      	       Set_Maneuver(true);
             end if;
           end if;
        
@@ -456,7 +448,7 @@ procedure control2 is
             Current_A := Altitude_Type (read_single_ADC_sensor_A(3));
             if (Cont_Maneuver_Pitch > 1 or Current_A <= 8500) then
               Cont_Maneuver_Pitch := Cont_Maneuver_Pitch + 1;
-              --Set_Aircraft_Pitch(20);			--Cambiar valor pitch
+              Global_Pitch := 20;
             end if;
             if (Cont_Maneuver_Roll > 1 or Current_A > 8500) then
               Cont_Maneuver_Roll := Cont_Maneuver_Roll + 1;
@@ -467,8 +459,8 @@ procedure control2 is
               if (Cont_Maneuver_Roll = 1) then
                 Set_Maneuver(False);
               end if;
-              --Set_Aircraft_Pitch(0);			--Cambiar valor pitch
-              Cont_Maneuver_Pitch := 1;
+                Global_Pitch := 0;			--Cambiar valor pitch
+                Cont_Maneuver_Pitch := 1;
             end if;
         
             if (Cont_Maneuver_Roll = 12) then
@@ -493,6 +485,7 @@ procedure control2 is
     end Control_Collisions;
     
     Procedure Show_Display is
+    Current_Joystick : Joystick_Type := (0,0);
     Current_Roll: Roll_Type := 0;
     Current_Pitch: Pitch_Type := 0;
     Altitude: Altitude_Type := 0;
@@ -502,30 +495,39 @@ procedure control2 is
     Current_Light : Light_Type := 0;
     
     begin 
+      Current_Joystick(x) := Joystick_Value(Read_Gyroscope_X_A);
+      Current_Joystick(y) := Joystick_Value(Read_Gyroscope_Y_A);
       Altitude:= Altitude_Type (read_single_ADC_sensor_A(3));
       Current_Power:= Power_Type (read_single_ADC_sensor_A(2));
       Velocity:= Speed_Type (float (Current_Power) * 1.2);
-      Current_Roll := Roll_Type(read_Gyroscope_X_A);
-      Current_Pitch := Pitch_Type(read_Gyroscope_Y_A);
+      Current_Roll := Roll_Type (Global_Degree_Servo);
+      Current_Pitch := Global_Pitch;
       Current_Obstacle_Distance := getDistance_A;
-      Current_Light := Light_Type(read_single_ADC_sensor_A(0));
+      Current_Light := Light_Type (read_single_ADC_sensor_A(0));
       
-      
-      Put ("Altitud: ");
-      Put (Altitude_Type'Image(Altitude));
-      New_Line;
+      Put_Line("Altitude: ");
+      Put_Line(Altitude_Type'Image(Altitude));
+
+      Put("Joysctick axis x: ");
+      Put(Joystick_Value'Image(Current_Joystick(x)));
+      Put(" axis y: ");
+      Put_Line(Joystick_Value'Image(Current_Joystick(y)));
       
       Put("Roll: ");
-      Put(Roll_Type'Image(Current_Roll));
-      New_Line;
+      Put_Line(Roll_Type'Image(Current_Roll));
       
-      --Put_Line("Pitch: ");
-      --Put_Line(Pitch_Type'Image(Current_Pitch));
-      --New_Line;
+      Put("Pitch: ");
+      Put_Line(Pitch_Type'Image(Current_Pitch));
       
-      --Put_Line("Velocity: ");
-      --Put_Line(Speed_Type'Image(Velocity));
-      --New_Line;
+      Put("Velocity: ");
+      Put_Line(Speed_Type'Image(Velocity));
+
+      Put("Vision value: ");
+      Put_Line(Light_Type'Image(Current_Light));
+
+      Put("Obstacle Distance: ");
+      Put_Line(float'Image(Current_Obstacle_Distance));
+
     end Show_Display;
     
     procedure Set_Maneuver (Input: in boolean) is
@@ -543,7 +545,6 @@ procedure control2 is
       
   end Lanza_Tareas;
   
-
     -----------------------------------------------------------------------------------------------------------------------------
 n : integer := 0;
   
