@@ -1,0 +1,14 @@
+menu "MQTT config"
+    
+    config BROKER_URL
+        string "Broker URL"
+        default "mqtt://demo.thingsboard.io"
+        help
+            URL del dispositivo para el thingsboard.
+
+    config TOKEN
+        string "Token"
+        default "08mcKYiLTf9EdKe766XE"
+        help 
+            Token del device del thingsboard.
+endmenu

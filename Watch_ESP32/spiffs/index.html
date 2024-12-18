@@ -1,0 +1,63 @@
+<table class="fixed" border="0">
+    <col width="1000px" /><col width="500px" />
+    <tr><td>
+        <h2>Configuracion de WiFi ESP32</h2>
+    </td><td>
+        <table border="0">
+            <tr>
+                <td>
+                    <label for="ssid">Nombre de la red (SSID)</label>
+                </td>
+                <td colspan="2">
+                    <input id="ssid" type="text" style="width:100%;" placeholder="Introduce el SSID">
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <label for="password">Password de la red</label>
+                </td>
+                <td colspan="2">
+                    <input id="password" type="password" style="width:100%;" placeholder="Introduce la password">
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <button id="save" type="button" onclick="guardarConfiguracion()">Guardar Configuracion</button>
+                </td>
+            </tr>
+        </table>
+    </td></tr>
+</table>
+
+<script>
+    function guardarConfiguracion() {
+        var ssid = document.getElementById("ssid").value;
+        var password = document.getElementById("password").value;
+
+        if (ssid.length == 0) {
+            alert("El campo SSID no puede estar vacío.");
+            return;
+        }
+
+        if (password.length == 0) {
+            alert("El campo Password no puede estar vacío.");
+            return;
+        }
+
+        var xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function() {
+            if (xhttp.readyState == 4) {
+                if (xhttp.status == 200) {
+                    alert("Configuracion guardada correctamente. Reiniciando dispositivo...");
+                    // location.reload(); 
+                } else {
+                    alert("Error: " + xhttp.status + "\n" + xhttp.responseText);
+                }
+            }
+        };
+
+        xhttp.open("POST", "/guardar_wifi", true);
+        xhttp.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+        xhttp.send("ssid=" + encodeURIComponent(ssid) + "&password=" + encodeURIComponent(password));
+    }
+</script>

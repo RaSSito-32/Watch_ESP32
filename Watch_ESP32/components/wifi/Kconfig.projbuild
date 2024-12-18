@@ -1,0 +1,29 @@
+menu "AP config"
+    
+    config SSID
+        string "SSID"
+        default "espc4c0"
+        help
+            Configurar el SSID del Access-Point
+
+    config PSWD
+        string "PSWD"
+        default "12345678"
+        help 
+            Configurar la password del Access-Point
+    
+    config CHANNEL
+        int "CHANNEL"
+        range 0 1
+        default 0
+        help
+            Configurar el canal del Access-Point
+    
+    config MAX_CONECTION
+        int "MAX_CONECTION"
+        range 0 4
+        default 4
+        help
+            Configurar el numero de conexiones simulataneas al Access-Point
+            
+endmenu
